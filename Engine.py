@@ -6,7 +6,6 @@ import re
 import pandas as pd
 from datetime import datetime
 import os
-import numpy as np
 import matplotlib.pyplot as plt
 
 class Engine:
@@ -42,7 +41,6 @@ class Engine:
             reponse = requests.get(url=url,headers=headers,timeout=3)
 
             """ Management of many Error """
-
             reponse.raise_for_status()
 
             self.html = reponse.text
@@ -58,7 +56,7 @@ class Engine:
             print(f'Timeout over: {erreur}')
     
     def Return_price_Amazon(self):
-        if self.html: # verification wheares url existing
+        if self.html: 
 
             self.regexAmazon =r"/(dp|gp/product)/([A-Z0-9]{10})"
             match_amazon = re.search(self.regexAmazon,self.url)
@@ -97,7 +95,7 @@ class Engine:
 
 
 
-                    print(f'Price: {prix_clean} | Price saved')
+                    print(f'\033[31mPrice\033[0m: {prix_clean} | Price saved') #\033[31m{variable}\033[0m pour couleur rouge
                 except AttributeError:
                     print(f'Error of scrapting')
             else:
@@ -114,11 +112,19 @@ class Engine:
     def Analise_products_price(self):
         if self.name:
             df_produit = pd.read_csv(self.nom_fichier,sep=';',on_bad_lines='skip')
+            df_produit.loc[:, 'date'] = pd.to_datetime(df_produit['date'])
+            df_produit.loc[:, 'price'] = pd.to_numeric(df_produit['price'], errors='coerce')
+            df_produit = df_produit.dropna(subset=['price'])
+
+            df_produit = df_produit.sort_values(by='date')
 
             date = pd.to_datetime(df_produit['date'])
             prix = df_produit['price']
 
+            
+
             plt.figure(figsize=(10, 5))
+            plt.ylim(0, prix.max())
             plt.plot(date,prix,marker='o',color='b', label=f'Price of {self.name}')
             plt.title("Evolution of price")
             plt.xlabel("Date")
@@ -126,9 +132,14 @@ class Engine:
             plt.grid(True, linestyle='--', alpha=0.7)
             plt.legend()
 
-            plt.xticks(rotation=45)
+            plt.xticks(rotation=45,fontsize=7)
 
             plt.savefig(f'{self.name}.png')
+
+            print(f'product \033[31m{self.name}\033[0m analyzed and \033[31m{self.name}.png\033[0m is create')
+        else:
+            print('Choice a name and analyse the price once time.')
+            return
 
             
 
